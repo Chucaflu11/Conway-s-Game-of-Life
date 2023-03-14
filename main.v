@@ -2,7 +2,6 @@ module main
 
 import gg
 import gx
-import rand
 
 const (
 
@@ -18,6 +17,7 @@ const (
 enum State {
     drawing
     running
+    paused
 }
 
 struct Game {
@@ -56,13 +56,44 @@ fn frame(mut game Game) {
 
 fn (mut game Game) mouse_draw() {
 
-    
+    mut x_mouse := game.gg.mouse_pos_x
+    mut y_mouse := game.gg.mouse_pos_y
+    mut m_button := game.gg.mouse_buttons
+
+    mut x_index := 0
+    mut y_index := 0
+
+    if m_button == .left{
+        x_index = int(x_mouse/res)
+        y_index = int(y_mouse/res)
+        game.cells[x_index][y_index] = 1
+    }
+}
+
+fn (mut game Game) get_keys(){
+
+    if game.gg.pressed_keys[32] {   //key 32 = space
+        if game.game_state == .drawing {
+            game.game_state = .running
+        }
+        else if game.game_state == .running{
+            game.game_state = .drawing
+        }
+        else {
+            game.game_state = .running
+        }
+    }
+
+    if game.gg.pressed_keys[256] {  //key 256 = esc
+        game.game_state = .paused
+    }
 
 }
 
 fn (mut game Game) draw(){
 
     mut color := gx.white
+    
     for i in 0 .. columns {
         for j in 0 .. rows {
             
@@ -75,6 +106,14 @@ fn (mut game Game) draw(){
         }
 
     }
+
+
+    if game.game_state == .drawing{
+        game.mouse_draw()
+    }
+
+    game.get_keys()
+
     if (game.gg.frame & 15 == 0) && (game.game_state == .running) {
 		game.update_cells()
 	}
@@ -83,7 +122,6 @@ fn (mut game Game) draw(){
 
 fn (mut game Game) init_game() {
 
-    // Some 2DArray with the game...
     mut list := [][]int{len: columns, init: []int{len: rows}}
 
     for i := 0; i < columns; i++ {
