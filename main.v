@@ -2,7 +2,6 @@ module main
 
 import gg
 import gx
-//import os
 
 const (
 
@@ -39,18 +38,15 @@ fn main() {
     mut game := &Game{
         gg: 0
     }
-    // Error: Font not initialized (?????)
-    //mut font_path := os.resource_abs_path(os.join_path('..', 'fonts', 'BigBlue-TerminalPlus-Nerd-Font-Complete-Windows-Compatible.TTF'))
     game.gg = gg.new_context(
         bg_color: gx.rgb(240, 240, 240)
         width: w_width
         height: w_height
         create_window: true
         window_title: 'Game of Life'
-        user_data: game //what this does¿?¿?¿? (if I try to get it out of the code it jumps out a RUNTIME ERROR for some reason)
-        resizable: false //Does this works?? XDD
+        user_data: game
+        resizable: false //Doesn't work
         frame_fn: frame
-        //font_path: font_path
     )
     game.init_game()
     game.gg.run()
@@ -72,7 +68,6 @@ fn (mut game Game) mouse_draw() {
     mut x_index := 0
     mut y_index := 0
 
-    //re-drawing a live cell after go out of the window range panic V compiler(??)
     mut out_of_range := x_mouse < 0 || x_mouse > 800 || y_mouse < 0 || y_mouse > 400
 
     if (m_button == .left) && (!out_of_range){
@@ -91,7 +86,7 @@ fn (mut game Game) get_keys(){
         else if game.game_state == .running{
             game.game_state = .drawing
         }
-        else {
+        else if game.game_state == .paused{
             game.game_state = .running
         }
     }
@@ -118,7 +113,6 @@ fn (mut game Game) text_format (text TextType) gx.TextCfg {
                 color:          gx.black
 	            size:           16
 	            align:          .center
-	            //vertical_align: .top
             }
         }
     }
@@ -138,7 +132,7 @@ fn (mut game Game) draw(){
             if game.cells[i][j] == 1{
                 color = gx.black
             }
-            //Pading of 1px to make borders for each square
+            //1px border
             game.gg.draw_rect_filled(i*res, j*res, res-1, res-1, color)
             color = gx.white
         }
@@ -146,14 +140,12 @@ fn (mut game Game) draw(){
     }
 
     
-    if game.game_state == .drawing {
+    if game.game_state == .drawing{
         game.gg.draw_text(w_width / 4, res, "Space: Play", game.text_format(.drawing))
         game.gg.draw_text(w_width / 2, res, "Left Click to draw", game.text_format(.drawing))
         game.gg.draw_text(w_width - (w_width / 4), res, "Esc: Pause", game.text_format(.drawing))
-        
         game.mouse_draw()
     }
-
     if (game.gg.frame & 15 == 0) && (game.game_state == .running) {
 		game.update_cells()
 	}
@@ -169,7 +161,7 @@ fn (mut game Game) init_game() {
 
     for i := 0; i < columns; i++ {
         for j := 0; j < rows; j++ {
-            list[i][j] = 0  //rand.intn(2) or { 0 }  //Random numer between 0 and 1 (?¿?¿?)
+            list[i][j] = 0
         }
     }
     game.cells = list.clone()
